@@ -33,7 +33,23 @@ export default function Home() {
     await supabase.from('questions').update({ vote: currentVote + 1 }).eq('id', id)
     fetchQuestions()
   }
+async function deleteQuestion(id) {
+  await supabase
+    .from('questions')
+    .delete()
+    .eq('id', id)
 
+  fetchQuestions()
+}
+
+async function deletePoll(id) {
+  await supabase
+    .from('polls')
+    .delete()
+    .eq('id', id)
+
+  fetchPolls()
+}
   async function fetchPolls() {
     const { data } = await supabase.from('polls').select('*').order('id', { ascending: false })
     setPolls(data || [])
@@ -80,77 +96,7 @@ export default function Home() {
       className="max-w-2xl mx-auto p-6">
 
       <h1 className="text-3xl font-bold mb-6 text-center text-white">Live Q&A + Polls</h1>
-
-      {/* Ask Question Section */}
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3 text-white">Ask a Question</h2>
-        <div className="flex gap-2 mb-4">
-          <input
-            style={{ backgroundColor: '#1e1e1e', color: '#ffffff', border: '1px solid #333' }}
-            className="p-2 flex-1 rounded placeholder-gray-500"
-            value={newQuestion}
-            onChange={e => setNewQuestion(e.target.value)}
-            placeholder="Type your question..."
-          />
-          <button
-            className="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
-            onClick={addQuestion}
-          >
-            Add
-          </button>
-        </div>
-
-        {/* Search */}
-        <input
-          style={{ backgroundColor: '#1e1e1e', color: '#ffffff', border: '1px solid #333' }}
-          className="p-2 w-full rounded placeholder-gray-500 mb-4"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="🔍 Search questions..."
-        />
-
-        {/* Asked Questions */}
-        <h3 className="mt-2 text-lg font-semibold mb-2 text-white">📋 Asked Questions</h3>
-        {filteredQuestions.length === 0 ? (
-          <p className="text-gray-500">No questions found.</p>
-        ) : (
-          <ul className="mt-2 space-y-3">
-            {filteredQuestions.map(q => (
-              <li key={q.id}
-                style={{ backgroundColor: '#1e1e1e', border: '1px solid #333' }}
-                className="p-3 rounded">
-                <div className="flex justify-between items-center">
-                  <span className="text-white">❓ {q.text}</span>
-                  <button
-                    style={{ backgroundColor: '#2a2a2a', color: '#ffffff', border: '1px solid #444' }}
-                    className="text-sm px-3 py-1 rounded hover:bg-gray-600 ml-2"
-                    onClick={() => voteQuestion(q.id, q.vote)}
-                  >
-                    👍 {q.vote}
-                  </button>
-                </div>
-
-                {/* AI Answer Button */}
-                <button
-                  className="mt-2 text-sm bg-purple-700 text-white px-3 py-1 rounded hover:bg-purple-800"
-                  onClick={() => askAI(q.id, q.text)}
-                >
-                  {loadingAI[q.id] ? '⏳ Thinking...' : '🤖 Ask AI'}
-                </button>
-
-                {/* AI Answer Display */}
-                {aiAnswers[q.id] && (
-                  <div style={{ backgroundColor: '#2a1a3e', border: '1px solid #6b21a8' }}
-                    className="mt-2 p-3 rounded text-purple-200 text-sm">
-                    🤖 <strong>AI Answer:</strong> {aiAnswers[q.id]}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
+       
       {/* Create Poll Section */}
       <section>
         <h2 className="text-xl font-semibold mb-3 text-white">Create a Poll</h2>
@@ -189,21 +135,43 @@ export default function Home() {
         ) : (
           <div className="mt-2 space-y-4">
             {polls.map(poll => (
-              <div key={poll.id}
-                style={{ backgroundColor: '#1e1e1e', border: '1px solid #333' }}
-                className="p-4 rounded">
-                <p className="font-semibold mb-2 text-white">🗳️ {poll.poll_question}</p>
-                {[1, 2, 3, 4].map(n => poll[`option_${n}`] && (
-                  <button
-                    key={n}
-                    onClick={() => votePoll(poll.id, n)}
-                    style={{ backgroundColor: '#2a2a2a', border: '1px solid #444', color: '#ffffff' }}
-                    className="block w-full text-left p-2 rounded mb-1 hover:bg-gray-600"
-                  >
-                    {poll[`option_${n}`]} — <span className="text-blue-400 font-medium">{poll[`votes_${n}`]} votes</span>
-                  </button>
-                ))}
-              </div>
+              <div
+  key={poll.id}
+  style={{ backgroundColor: '#1e1e1e', border: '1px solid #333' }}
+  className="p-4 rounded"
+>
+  <p className="font-semibold mb-2 text-white">
+    🗳️ {poll.poll_question}
+  </p>
+
+  {[1, 2, 3, 4].map(
+    n =>
+      poll[`option_${n}`] && (
+        <button
+          key={n}
+          onClick={() => votePoll(poll.id, n)}
+          style={{
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #444',
+            color: '#ffffff',
+          }}
+          className="block w-full text-left p-2 rounded mb-1 hover:bg-gray-600"
+        >
+          {poll[`option_${n}`]} —{" "}
+          <span className="text-blue-400 font-medium">
+            {poll[`votes_${n}`]} votes
+          </span>
+        </button>
+      )
+  )}
+
+  <button
+    onClick={() => deletePoll(poll.id)}
+    className="bg-red-600 text-white px-3 py-1 rounded mt-3 hover:bg-red-700"
+  >
+    🗑 Delete Poll
+  </button>
+</div>
             ))}
           </div>
         )}
@@ -211,3 +179,99 @@ export default function Home() {
     </main>
   )
 }
+      {/* Ask Question Section */}
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-3 text-white">Ask a Question</h2>
+        <div className="flex gap-2 mb-4">
+          <input
+            style={{ backgroundColor: '#1e1e1e', color: '#ffffff', border: '1px solid #333' }}
+            className="p-2 flex-1 rounded placeholder-gray-500"
+            value={newQuestion}
+            onChange={e => setNewQuestion(e.target.value)}
+            placeholder="Type your question..."
+          />
+          <button
+            className="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
+            onClick={addQuestion}
+          >
+            Add
+          </button>
+        </div>
+
+        {/* Search */}
+        <input
+          style={{ backgroundColor: '#1e1e1e', color: '#ffffff', border: '1px solid #333' }}
+          className="p-2 w-full rounded placeholder-gray-500 mb-4"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Search questions..."
+        />
+
+       {/* Asked Questions */}
+              <h3 className="mt-2 text-lg font-semibold mb-2 text-white">
+                📋 Asked Questions
+              </h3>
+              
+              {filteredQuestions.length === 0 ? (
+                <p className="text-gray-500">No questions found.</p>
+              ) : (
+                <ul className="mt-2 space-y-3">
+                  {filteredQuestions.map((q) => (
+                    <li
+                      key={q.id}
+                      style={{
+                        backgroundColor: '#1e1e1e',
+                        border: '1px solid #333'
+                      }}
+                      className="p-3 rounded"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-white">❓ {q.text}</span>
+              
+                        <div className="flex gap-2">
+                          <button
+                            style={{
+                              backgroundColor: '#2a2a2a',
+                              color: '#ffffff',
+                              border: '1px solid #444'
+                            }}
+                            className="text-sm px-3 py-1 rounded hover:bg-gray-600"
+                            onClick={() => voteQuestion(q.id, q.vote)}
+                          >
+                            👍 {q.vote}
+                          </button>
+              
+                          <button
+                            className="bg-red-600 text-white text-sm px-3 py-1 rounded hover:bg-red-700"
+                            onClick={() => deleteQuestion(q.id)}
+                          >
+                            🗑 Delete
+                          </button>
+                        </div>
+                      </div>
+              
+                      <button
+                        className="mt-2 text-sm bg-purple-700 text-white px-3 py-1 rounded hover:bg-purple-800"
+                        onClick={() => askAI(q.id, q.text)}
+                      >
+                        {loadingAI[q.id] ? '⏳ Thinking...' : ' 🐱 Ask AI'}
+                      </button>
+              
+                      {aiAnswers[q.id] && (
+                        <div
+                          style={{
+                            backgroundColor: '#2a1a3e',
+                            border: '1px solid #6b21a8'
+                          }}
+                          className="mt-2 p-3 rounded text-purple-200 text-sm"
+                        >
+                          🤖 <strong>AI Answer:</strong> {aiAnswers[q.id]}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+               
+      </section>

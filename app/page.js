@@ -176,9 +176,7 @@ async function deletePoll(id) {
           </div>
         )}
       </section>
-    </main>
-  )
-}
+ 
       {/* Ask Question Section */}
       <section className="mb-10">
         <h2 className="text-xl font-semibold mb-3 text-white">Ask a Question</h2>
@@ -275,3 +273,6 @@ async function deletePoll(id) {
 
                
       </section>
+   </main>
+  )
+}
